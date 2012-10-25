@@ -38,9 +38,9 @@ Date.prototype.clone = function ()
 /**
  * Increment one day
  */
-Date.prototype.nextDay = function ()
+Date.prototype.moveDay = function (how_many_days)
 {
-  this.setDate(this.getDate() + 1);
+  this.setDate(this.getDate() + how_many_days);
 }
 
 /* =============================================================================
@@ -54,20 +54,19 @@ $(document).on('ready', function (e)
   // By default mambo state is "normal"
   Mambo.State.setState('normal');
   
-  // Attach event handlers  
-  $(document).on('mousedown', '.calendar_bar',
-    Mambo.events.CalendarBar.mousedown);
-  $(document).on('mouseup', '.calendar_bar',
-    Mambo.events.CalendarBar.mouseup);
-  
+  // .calendar_bar .day events
   $(document).on('mousedown', '.calendar_bar .day',
     Mambo.events.CalendarBar.Day.mousedown);
-  
   $(document).on('dblclick', '.calendar_bar .day',
     Mambo.events.CalendarBar.Day.dblclick);
   
+  // document events
   $(document).on('click',
     Mambo.events.Document.click);
+  $(document).on('mousemove',
+    Mambo.events.Document.mousemove);
+  $(document).on('mouseup',
+    Mambo.events.Document.mouseup);
 });
 
 /* =============================================================================
@@ -75,7 +74,11 @@ $(document).on('ready', function (e)
  */
 var Mambo = {
   /** Active DaysBar to drag */
-  DaysBarActive: null
+  DaysBarActive: null,
+  
+  /** Origin point from mousedown event */
+  is_mousedown: false,
+  origin_x: 0
 };
 
 /* =============================================================================
@@ -90,7 +93,8 @@ Mambo.CalendarBar = function (id_selector)
   var DateStart = new Date().fromYMDString($CalendarBar.data('date-start'));
   var DateEnd   = new Date().fromYMDString($CalendarBar.data('date-end'));;
   
-  /** Initialize days bars array */
+  /* Initialize days bars array, it store all DaysBar objects related to
+   * this CalendarBar */
   var days_bars = [];
   
   /**
@@ -114,7 +118,7 @@ Mambo.CalendarBar = function (id_selector)
     
     // Crear the calendar bar and add the days
     $CalendarBar.empty();
-    for (DateCounter; DateCounter <= DateEnd; DateCounter.nextDay()) {
+    for (DateCounter; DateCounter <= DateEnd; DateCounter.moveDay(+1)) {
       // Create Day block and pointer, then append to calendar bar
       $CalendarBar.append($('<div>')
         .addClass('day')
@@ -182,9 +186,10 @@ Mambo.DaysBar = function (Settings)
   {
     var DateCounter = Settings.DateStart.clone();
     
-    // un-paint all days with the ID of this days bar, then re-paint the new days
-    $('[data-days-bar-id=' + id + ']').css('background-color', '#ccc');
-    for(DateCounter; DateCounter <= Settings.DateEnd; DateCounter.nextDay()) {
+    // Clear all days with the ID of this days bar, then re-paint the new days
+    $('[data-days-bar-id=' + id + ']').removeData().css('background-color', '#ccc');
+    
+    for(DateCounter; DateCounter <= Settings.DateEnd; DateCounter.moveDay(+1)) {
       $('div[data-date=' + DateCounter.toYMDString() + ']')
         .attr('data-days-bar-id', id)
         .data('CalendarBar', CalendarBar)
@@ -202,7 +207,7 @@ Mambo.DaysBar = function (Settings)
   this.setIndex = function (new_index)
   {
     index = new_index;
-  }
+  };
   
   /**
    * Change the dates that represent this DaysBar, to see changes in DOM you
@@ -213,7 +218,14 @@ Mambo.DaysBar = function (Settings)
     Settings.DateStart = NewDateStart;
     Settings.DateEnd   = NewDateEnd;
     return this;
-  }
+  };
+  
+  this.move = function (how_many_days)
+  {
+    Settings.DateStart.moveDay(how_many_days);
+    Settings.DateEnd.moveDay(how_many_days);
+    return this.draw();
+  };
   
   /**
    * Set the CalendarBar reference object to this DaysBar
@@ -296,29 +308,48 @@ Mambo.events = {
       {
         $(this).addClass('active');
       },
+      /**
+       * Save data to start drag
+       */
       mousedown: function (e)
       {
-        Mambo.DaysBarActive = $(this).data().DaysBar;
-        console.log(Mambo.DaysBarActive);
-      },
-    }, /* end of CalendarBar.Day */
-    
-    mousedown: function (e)
-    {
-      console.log('calendar_bar.mousedown');
-    },
-    
-    mouseup: function (e)
-    {
-      Mambo.DaysBarActive = null;
-      console.log(Mambo.DaysBarActive);
-    }
+        // Activate drag only when the .day element touched have a DaysBar object
+        if (typeof $(this).data().DaysBar === 'object') {
+          Mambo.is_mousedown  = true;
+          Mambo.origin_x      = e.pageX;
+          Mambo.DaysBarActive = $(this).data().DaysBar;
+        }
+      }
+    } /* end of CalendarBar.Day */
   }, /* end of CalendarBar */
   
   Document: {
     click: function (e)
     {
       $('.calendar_bar .day.active').removeClass('active');
+    },
+    /**
+     * Drag the active DaysBar
+     */
+    mousemove: function (e)
+    {
+      if (Mambo.is_mousedown) {
+        var x = e.pageX - Mambo.origin_x;
+        if (Math.abs(x) >= 32) {
+          Mambo.origin_x = e.pageX;
+          Mambo.DaysBarActive.move(Math.round(x/32));
+        }
+      }
+    },
+    /**
+     * Clear data to stop drag
+     */
+    mouseup: function (e)
+    {
+      if (Mambo.is_mousedown) {
+        Mambo.DaysBarActive = null;
+        Mambo.is_mousedown  = false;
+      }
     }
   }
 };

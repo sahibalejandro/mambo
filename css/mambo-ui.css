@@ -2,6 +2,13 @@
  * Mambo Styles!
  * @author Sahib J. Leo
  */
+.calendar_bar {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
 .calendar_bar .day:first-child {
   border-left-width: 0px;
 }
