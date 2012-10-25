@@ -1,0 +1,28 @@
+/**
+ * Mambo Styles!
+ * @author Sahib J. Leo
+ */
+.calendar_bar .day:first-child {
+  border-left-width: 0px;
+}
+
+.calendar_bar .day {
+  background: #ccc;
+  border: 0px solid #000;
+  border-width: 0px 0px 1px 1px;
+  cursor: pointer;
+  display: inline-block;
+  width: 30px;
+  height: 20px;
+}
+
+.calendar_bar .day .pointer {
+  border: 2px solid #fff;
+  display: none;
+  width: 26px;
+  height: 16px;
+}
+
+.calendar_bar .day.active .pointer {
+  display: block;
+}

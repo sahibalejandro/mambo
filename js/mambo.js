@@ -2,12 +2,14 @@ $(document).on('ready', function (e)
 {
   var CalendarBar = new Mambo.CalendarBar('#calendar_bar');
   
-  CalendarBar.addDaysBars([
-    new Mambo.DaysBar({
-      color: '#0f0',
-      DateStart: new Date().fromYMDString('2012-10-01'),
-      DateEnd: new Date().fromYMDString('2012-10-05')
-    }),
+  var ProjectBar = new Mambo.DaysBar({
+    color: '#0f0',
+    DateStart: new Date().fromYMDString('2012-10-01'),
+    DateEnd: new Date().fromYMDString('2012-10-02')
+  });
+  
+  CalendarBar.setDaysBars([
+    ProjectBar,
     new Mambo.DaysBar({
       color: '#0ff',
       DateStart: new Date().fromYMDString('2012-10-06'),
@@ -18,7 +20,5 @@ $(document).on('ready', function (e)
       DateStart: new Date().fromYMDString('2012-10-11'),
       DateEnd: new Date().fromYMDString('2012-10-21')
     })
-  ]);
-  
-  CalendarBar.draw();
+  ]).draw();
 });
